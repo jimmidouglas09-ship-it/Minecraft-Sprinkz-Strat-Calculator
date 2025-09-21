@@ -275,8 +275,32 @@ public:
         Vec3 nearest;
 
         auto roundToNearestChunkCoord = [](int coord) -> int {
-            int chunkIndex = (coord + 8) / 16;
-            return chunkIndex * 16 + 4;
+            // Calculate which chunk the coordinate is in
+            // Chunks are 16 blocks wide, starting at multiples of 16
+            // The 4x4 center is at chunk_start + 4
+
+            int chunkStart;
+            if (coord >= 0) {
+                chunkStart = (coord / 16) * 16;
+            }
+            else {
+                // For negative coordinates, we need floor division
+                chunkStart = ((coord - 15) / 16) * 16;
+            }
+
+            // Find the nearest 4x4 center (either in this chunk or adjacent chunks)
+            int option1 = chunkStart + 4;      // 4x4 center in current chunk
+            int option2 = chunkStart - 12;     // 4x4 center in previous chunk
+            int option3 = chunkStart + 20;     // 4x4 center in next chunk
+
+            // Return the closest one
+            int dist1 = abs(coord - option1);
+            int dist2 = abs(coord - option2);
+            int dist3 = abs(coord - option3);
+
+            if (dist1 <= dist2 && dist1 <= dist3) return option1;
+            if (dist2 <= dist3) return option2;
+            return option3;
             };
 
         nearest.x = roundToNearestChunkCoord(playerPos.x);
